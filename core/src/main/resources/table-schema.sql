@@ -1,7 +1,7 @@
-CREATE TABLE MEMBER
+CREATE TABLE G_USER
 (
-    id            BIGINT primary key,
-    user_id       VARCHAR,
+    id            VARCHAR primary key,
+    user_id       VARCHAR unique,
     password      VARCHAR,
     name          VARCHAR,
     interest_tags VARCHAR,
