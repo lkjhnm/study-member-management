@@ -3,6 +3,7 @@ package com.grasstudy.user.controller;
 import com.grasstudy.user.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
@@ -15,7 +16,7 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Mono;
 
-import static org.mockito.ArgumentMatchers.any;
+import java.util.Objects;
 
 @ExtendWith(SpringExtension.class)
 @WebFluxTest(UserController.class)
@@ -31,11 +32,12 @@ class UserControllerTest {
 
 	@Test
 	void signup() {
-		Mockito.when(userService.signup(any())).thenReturn(Mono.just(ResponseEntity.ok().build()));
+		Mockito.when(userService.signup(ArgumentMatchers.argThat(user -> Objects.nonNull(user.getUserId()))))
+		       .thenReturn(Mono.just(ResponseEntity.ok().build()));
 
 		webTestClient.post()
 		             .uri("/user/signup")
-		             .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+		             .contentType(MediaType.APPLICATION_JSON)
 		             .body(BodyInserters.fromValue("{\n" +
 				             "  \"userId\" : \"mock-id\",\n" +
 				             "  \"password\" : \"12345!@\",\n" +
