@@ -21,6 +21,12 @@ public class UserController {
 		                  .map(v -> ResponseEntity.ok().<Void>build())
 		                  .onErrorReturn(ResponseEntity.internalServerError().build());
 	}
+
+	@RequestMapping(value = "/check/{userId}", method = RequestMethod.GET)
+	public Mono<ResponseEntity<Void>> check(@PathVariable String userId) {
+		return userService.user(userId)
+		                  .map(v -> ResponseEntity.status(409).<Void>build())
+		                  .switchIfEmpty(Mono.just(ResponseEntity.ok().build()));
 	}
 
 	// 사용자 조회

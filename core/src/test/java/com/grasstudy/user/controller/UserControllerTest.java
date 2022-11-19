@@ -1,6 +1,7 @@
 package com.grasstudy.user.controller;
 
 import com.grasstudy.user.service.UserService;
+import com.grasstudy.user.support.MockBuilder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatchers;
@@ -32,7 +33,7 @@ class UserControllerTest {
 	@Test
 	void signup() {
 		Mockito.when(userService.signup(ArgumentMatchers.argThat(user -> Objects.nonNull(user.getUserId()))))
-				.thenAnswer(v -> Mono.just(v.getArgument(0)));
+		       .thenAnswer(v -> Mono.just(v.getArgument(0)));
 
 		webTestClient.post()
 		             .uri("/user/signup")
@@ -45,5 +46,22 @@ class UserControllerTest {
 				             "}"))
 		             .exchange()
 		             .expectStatus().is2xxSuccessful();
+	}
+
+	@Test
+	void check() {
+		Mockito.when(userService.user(ArgumentMatchers.argThat(id -> Objects.nonNull(id))))
+		       .thenAnswer(v -> Objects.equals(v.getArgument(0), "fail_test") ?
+				       Mono.empty() : Mono.just(MockBuilder.getMockUser("mock-id")));
+
+		webTestClient.get()
+		             .uri("/user/check/mock-id")
+		             .exchange()
+		             .expectStatus().is2xxSuccessful();
+
+		webTestClient.get()
+		             .uri("/user/check/fail_test")
+		             .exchange()
+		             .expectStatus().is4xxClientError();
 	}
 }
