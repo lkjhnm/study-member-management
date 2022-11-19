@@ -8,7 +8,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -30,7 +29,7 @@ class UserServiceTest {
 		Mockito.when(userRepository.save(any())).thenReturn(Mono.just(mockUser));
 
 		StepVerifier.create(userService.signup(mockUser))
-				.expectNext(ResponseEntity.ok().<Void>build())
+				.expectNext(mockUser)
 				.verifyComplete();
 	}
 
@@ -40,7 +39,7 @@ class UserServiceTest {
 
 		User mockUser = MockBuilder.getMockUser("mock-id");
 		StepVerifier.create(userService.signup(mockUser))
-		            .expectNext(ResponseEntity.internalServerError().build())
-		            .verifyComplete();
+		            .expectError(RuntimeException.class)
+		            .verify();
 	}
 }

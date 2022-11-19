@@ -4,10 +4,7 @@ import com.grasstudy.user.entity.User;
 import com.grasstudy.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
 @RestController
@@ -20,7 +17,10 @@ public class UserController {
 	// 회원가입
 	@RequestMapping(value = "/signup", method = RequestMethod.POST)
 	public Mono<ResponseEntity<Void>> signup(@RequestBody User user) {
-		return userService.signup(user);
+		return userService.signup(user)
+		                  .map(v -> ResponseEntity.ok().<Void>build())
+		                  .onErrorReturn(ResponseEntity.internalServerError().build());
+	}
 	}
 
 	// 사용자 조회

@@ -10,7 +10,6 @@ import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
@@ -33,7 +32,7 @@ class UserControllerTest {
 	@Test
 	void signup() {
 		Mockito.when(userService.signup(ArgumentMatchers.argThat(user -> Objects.nonNull(user.getUserId()))))
-		       .thenReturn(Mono.just(ResponseEntity.ok().build()));
+				.thenAnswer(v -> Mono.just(v.getArgument(0)));
 
 		webTestClient.post()
 		             .uri("/user/signup")
