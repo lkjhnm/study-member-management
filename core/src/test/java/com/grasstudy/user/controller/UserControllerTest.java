@@ -52,7 +52,7 @@ class UserControllerTest {
 	void check() {
 		Mockito.when(userService.user(ArgumentMatchers.argThat(id -> Objects.nonNull(id))))
 		       .thenAnswer(v -> Objects.equals(v.getArgument(0), "fail_test") ?
-				       Mono.empty() : Mono.just(MockBuilder.getMockUser("mock-id")));
+				       Mono.just(MockBuilder.getMockUser("mock-id")) : Mono.empty());
 
 		webTestClient.get()
 		             .uri("/user/check/mock-id")
