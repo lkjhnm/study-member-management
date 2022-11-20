@@ -5,12 +5,11 @@ import com.grasstudy.user.entity.User;
 import java.util.UUID;
 
 public class MockBuilder {
-	public static User getMockUser(String userId) {
+	public static User getMockUser(String email) {
 		return User.builder()
-		           .userId(userId)
-		           .name(String.format("user name-%s", UUID.randomUUID()))
+		           .email(email)
+		           .nickname(String.format("nickname-%s", UUID.randomUUID()))
 		           .password(String.format("password-%s", UUID.randomUUID()))
-		           .email(String.format("user mail-%s", UUID.randomUUID()))
 		           .build();
 	}
 }

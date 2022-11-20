@@ -19,10 +19,9 @@ public class User implements Persistable<String> {
 
 	@Id
 	private String id;
-	private String userId;
-	private String password;    // todo: password encoder
-	private String name;
 	private String email;
+	private String password;    // todo: password encoder
+	private String nickname;
 	private List<String> interestTags;
 	private String fcmToken;
 

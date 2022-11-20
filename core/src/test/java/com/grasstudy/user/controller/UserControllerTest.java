@@ -32,16 +32,15 @@ class UserControllerTest {
 
 	@Test
 	void signup() {
-		Mockito.when(userService.signup(ArgumentMatchers.argThat(user -> Objects.nonNull(user.getUserId()))))
+		Mockito.when(userService.signup(ArgumentMatchers.argThat(user -> Objects.nonNull(user.getEmail()))))
 		       .thenAnswer(v -> Mono.just(v.getArgument(0)));
 
 		webTestClient.post()
 		             .uri("/user")
 		             .contentType(MediaType.APPLICATION_JSON)
 		             .body(BodyInserters.fromValue("{\n" +
-				             "  \"userId\" : \"mock-id\",\n" +
-				             "  \"password\" : \"12345!@\",\n" +
 				             "  \"email\" : \"mock@mock.com\",\n" +
+				             "  \"password\" : \"12345!@\",\n" +
 				             "  \"interestTags\" : [\"java\", \"msa\", \"love\"]\n" +
 				             "}"))
 		             .exchange()

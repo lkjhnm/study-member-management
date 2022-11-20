@@ -22,9 +22,9 @@ public class UserController {
 		                  .onErrorReturn(ResponseEntity.internalServerError().build());
 	}
 
-	@RequestMapping(value = "/check/{userId}", method = RequestMethod.GET)
-	public Mono<ResponseEntity<Void>> check(@PathVariable String userId) {
-		return userService.user(userId)
+	@RequestMapping(value = "/check/{email}", method = RequestMethod.GET)
+	public Mono<ResponseEntity<Void>> check(@PathVariable String email) {
+		return userService.user(email)
 		                  .map(v -> ResponseEntity.status(409).<Void>build())
 		                  .switchIfEmpty(Mono.just(ResponseEntity.ok().build()));
 	}

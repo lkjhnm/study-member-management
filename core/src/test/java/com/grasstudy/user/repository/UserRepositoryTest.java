@@ -21,8 +21,8 @@ class UserRepositoryTest {
 	@Test
 	void save() {
 		userRepository.save(MockBuilder.getMockUser("mock-id"))
-		              .map(User::getUserId)
-		              .flatMap(userRepository::findByUserId)
+		              .map(User::getEmail)
+		              .flatMap(userRepository::findByEmail)
 		              .as(StepVerifier::create)
 		              .expectNextMatches(member -> Objects.nonNull(member.getId()))
 		              .expectComplete();

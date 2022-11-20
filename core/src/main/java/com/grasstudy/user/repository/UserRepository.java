@@ -9,6 +9,6 @@ import reactor.core.publisher.Mono;
 @Repository
 public interface UserRepository extends ReactiveCrudRepository<User, Long> {
 
-	Mono<User> findByUserId(String userId);
+	Mono<User> findByEmail(String email);
 
 }
