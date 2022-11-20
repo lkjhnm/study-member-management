@@ -12,6 +12,7 @@ public class UserService {
 
 	private final UserRepository userRepository;
 
+	//todo: 비밀번호 암호화 로직 적용
 	public Mono<User> signup(User user) {
 		return userRepository.save(user);
 	}
