@@ -15,7 +15,7 @@ public class UserController {
 	private final UserService userService;
 
 	// 회원가입
-	@RequestMapping(value = "/signup", method = RequestMethod.POST)
+	@RequestMapping(method = RequestMethod.POST)
 	public Mono<ResponseEntity<Void>> signup(@RequestBody User user) {
 		return userService.signup(user)
 		                  .map(v -> ResponseEntity.ok().<Void>build())

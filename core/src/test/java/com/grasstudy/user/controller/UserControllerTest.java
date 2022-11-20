@@ -36,7 +36,7 @@ class UserControllerTest {
 		       .thenAnswer(v -> Mono.just(v.getArgument(0)));
 
 		webTestClient.post()
-		             .uri("/user/signup")
+		             .uri("/user")
 		             .contentType(MediaType.APPLICATION_JSON)
 		             .body(BodyInserters.fromValue("{\n" +
 				             "  \"userId\" : \"mock-id\",\n" +
