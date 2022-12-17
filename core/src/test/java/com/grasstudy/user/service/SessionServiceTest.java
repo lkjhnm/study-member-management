@@ -1,6 +1,7 @@
 package com.grasstudy.user.service;
 
 import com.grasstudy.user.entity.User;
+import com.grasstudy.user.repository.AuthenticationRepository;
 import com.grasstudy.user.support.MockBuilder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,11 +25,16 @@ class SessionServiceTest {
 	@MockBean
 	UserService userService;
 
+	@MockBean
+	AuthenticationRepository authRepo;
+
 	@Test
 	void signIn() {
 		User mockUser = MockBuilder.getMockUser("mock@mock.com");
 		Mockito.when(userService.user(any()))
 		       .thenReturn(Mono.just(mockUser));
+		Mockito.when(authRepo.save(any())).thenAnswer(invocationOnMock ->
+				Mono.just(invocationOnMock.getArgument(0)));
 
 		sessionService.signIn(mockUser.getEmail(), mockUser.getPassword()).log()
 		              .as(StepVerifier::create)

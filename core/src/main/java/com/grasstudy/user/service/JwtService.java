@@ -1,6 +1,7 @@
 package com.grasstudy.user.service;
 
 
+import com.grasstudy.user.entity.Authentication;
 import com.grasstudy.user.entity.User;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -28,15 +29,16 @@ public class JwtService {
 		return this.signKey.publicKey;
 	}
 
-	public String signIn(User user) {
-		return Jwts.builder()
-		           .setHeaderParam("kid", this.signKey.kid)
-		           .setClaims(Map.of("email", user.getEmail()))
-		           .signWith(this.signKey.privateKey)
-		           .compact();
+	public Authentication signIn(User user) {
+		return Authentication.builder()
+		                     .refreshToken(UUID.randomUUID().toString())
+		                     .accessToken(Jwts.builder()
+		                                      .setHeaderParam("kid", this.signKey.kid)
+		                                      .setClaims(Map.of("email", user.getEmail()))
+		                                      .signWith(this.signKey.privateKey)
+		                                      .compact())
+		                     .build();
 	}
-
-
 
 	private static class SignKey {
 		public SignKey(String kid, KeyPair keyPair) {

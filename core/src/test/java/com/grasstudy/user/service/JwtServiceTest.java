@@ -1,5 +1,6 @@
 package com.grasstudy.user.service;
 
+import com.grasstudy.user.entity.Authentication;
 import com.grasstudy.user.support.MockBuilder;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
@@ -20,11 +21,12 @@ class JwtServiceTest {
 
 	@Test
 	void signIn() {
-		String jws = jwtService.signIn(MockBuilder.getMockUser("mock@mock.com"));
+		Authentication auth = jwtService.signIn(MockBuilder.getMockUser("mock@mock.com"));
 
 		Jws<Claims> claimsJws = Jwts.parserBuilder().setSigningKey(jwtService.getPublicKey())
-		                            .build().parseClaimsJws(jws);
+		                            .build().parseClaimsJws(auth.getAccessToken());
 
+		Assertions.assertThat(auth.getRefreshToken()).isNotNull();
 		Assertions.assertThat(claimsJws.getHeader().getKeyId()).isNotNull();
 		Assertions.assertThat(claimsJws.getHeader().getAlgorithm()).isEqualTo("ES256");
 		Assertions.assertThat(claimsJws.getBody().get("email")).isEqualTo("mock@mock.com");

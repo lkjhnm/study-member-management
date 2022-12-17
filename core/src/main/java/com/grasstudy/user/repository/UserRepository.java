@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
 
 @Repository
-public interface UserRepository extends ReactiveCrudRepository<User, Long> {
+public interface UserRepository extends ReactiveCrudRepository<User, String> {
 
 	Mono<User> findByEmail(String email);
 
