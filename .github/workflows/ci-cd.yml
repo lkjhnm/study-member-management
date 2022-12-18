@@ -26,6 +26,7 @@ jobs:
           key: ${{ secrets.KEY }}
           source: "core/target/user-*.jar"
           target: ${{ secrets.USER_SERVICE_PATH }}
+          strip_components: 2
       - name: Restrat Service
         uses: appleboy/ssh-action@v0.1.6
         env:
