@@ -24,5 +24,11 @@ public class SessionController {
 				.onErrorReturn(ResponseEntity.status(401).build());
 	}
 
-	//todo: refresh API
+	@ResponseBody
+	@RequestMapping(value = "/refresh", method = RequestMethod.POST)
+	public Mono<ResponseEntity<Authentication>> refresh(@RequestBody Authentication auth) {
+		return sessionService.refresh(auth)
+				.map(ResponseEntity::ok)
+				.onErrorReturn(ResponseEntity.status(401).build());
+	}
 }

@@ -1,5 +1,6 @@
 package com.grasstudy.user.service;
 
+import com.grasstudy.user.entity.Authentication;
 import com.grasstudy.user.entity.User;
 import com.grasstudy.user.repository.AuthenticationRepository;
 import com.grasstudy.user.support.MockBuilder;
@@ -21,6 +22,9 @@ class SessionServiceTest {
 
 	@Autowired
 	SessionService sessionService;
+
+	@Autowired
+	JwtService jwtService;
 
 	@MockBean
 	UserService userService;
@@ -52,5 +56,23 @@ class SessionServiceTest {
 		              .as(StepVerifier::create)
 		              .expectError(RuntimeException.class)
 		              .verify();
+	}
+
+	@Test
+	void refresh() {
+		User mockUser = MockBuilder.getMockUser("mock@mock.com");
+		Authentication mockAuth = jwtService.signIn(mockUser);
+		Mockito.when(authRepo.findByRefreshTokenAndAccessToken(mockAuth.getRefreshToken(), mockAuth.getAccessToken()))
+		       .thenReturn(Mono.just(mockAuth));
+		Mockito.when(authRepo.delete(mockAuth)).thenReturn(Mono.empty());
+		Mockito.when(authRepo.save(any())).thenAnswer(t -> Mono.just(t.getArgument(0)));
+		Mockito.when(userService.user("mock@mock.com")).thenReturn(Mono.just(mockUser));
+
+		sessionService.refresh(mockAuth).log()
+				.as(StepVerifier::create)
+				.expectNextMatches(newAuth -> !mockAuth.getAccessToken().equals(newAuth.getAccessToken()) &&
+						!mockAuth.getRefreshToken().equals(newAuth.getRefreshToken()) &&
+						jwtService.parseEmail(newAuth.getAccessToken()).equals("mock@mock.com"))
+				.verifyComplete();
 	}
 }

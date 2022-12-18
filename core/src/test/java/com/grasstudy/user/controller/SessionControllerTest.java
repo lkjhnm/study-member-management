@@ -2,6 +2,7 @@ package com.grasstudy.user.controller;
 
 import com.grasstudy.user.entity.Authentication;
 import com.grasstudy.user.service.SessionService;
+import com.grasstudy.user.support.MockBuilder;
 import io.jsonwebtoken.Jwts;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -68,6 +69,40 @@ class SessionControllerTest {
 				             "  \"email\" : \"mock@mock.com\",\n" +
 				             "  \"password\" : \"12345!@\"\n" +
 				             "}"))
+		             .exchange()
+		             .expectStatus().isEqualTo(401)
+		;
+	}
+
+	@Test
+	void refresh() {
+		Authentication expiredAuth = MockBuilder.auth();
+		Authentication newAuth = MockBuilder.auth();
+		Mockito.when(sessionService.refresh(expiredAuth)).thenReturn(Mono.just(newAuth));
+
+		webTestClient.post()
+		             .uri("/session/refresh")
+		             .contentType(MediaType.APPLICATION_JSON)
+		             .body(BodyInserters.fromValue(expiredAuth))
+		             .exchange()
+		             .expectStatus().isOk()
+		             .expectBody()
+		             .consumeWith(result -> logger.info("{}", result))
+		             .jsonPath("$.refreshToken").isEqualTo(newAuth.getRefreshToken())
+		             .jsonPath("$.accessToken").isEqualTo(newAuth.getAccessToken())
+		             .jsonPath("$.id").doesNotHaveJsonPath();
+	}
+
+	@Test
+	void refresh_failure() {
+		Authentication auth = MockBuilder.auth();
+		Mockito.when(sessionService.refresh(auth))
+		       .thenReturn(Mono.error(RuntimeException::new));
+
+		webTestClient.post()
+		             .uri("/session/refresh")
+		             .contentType(MediaType.APPLICATION_JSON)
+		             .body(BodyInserters.fromValue(auth))
 		             .exchange()
 		             .expectStatus().isEqualTo(401);
 	}

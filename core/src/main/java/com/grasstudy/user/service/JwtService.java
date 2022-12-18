@@ -3,8 +3,7 @@ package com.grasstudy.user.service;
 
 import com.grasstudy.user.entity.Authentication;
 import com.grasstudy.user.entity.User;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Service;
 
@@ -20,11 +19,14 @@ import java.util.UUID;
 @Service
 public class JwtService {
 
+	static final String CLAIM_KEY_EMAIL = "email";
 	private SignKey signKey;
+	private JwtParser jwtParser;
 
 	@PostConstruct
 	private void init() {
 		this.signKey = new SignKey(UUID.randomUUID().toString(), Keys.keyPairFor(SignatureAlgorithm.ES256));
+		this.jwtParser = Jwts.parserBuilder().setSigningKey(this.getPublicKey()).build();
 	}
 
 	public PublicKey getPublicKey() {
@@ -36,12 +38,17 @@ public class JwtService {
 		                     .refreshToken(UUID.randomUUID().toString())
 		                     .accessToken(Jwts.builder()
 		                                      .setHeaderParam("kid", this.signKey.kid)
-		                                      .setClaims(Map.of("email", user.getEmail()))
+		                                      .setClaims(Map.of(CLAIM_KEY_EMAIL, user.getEmail()))
 		                                      .signWith(this.signKey.privateKey)
 		                                      .setExpiration(getTime(Calendar.HOUR_OF_DAY, 1))
 		                                      .setIssuedAt(new Date())
 		                                      .compact())
 		                     .build();
+	}
+
+	public String parseEmail(String accessToken) {
+		return jwtParser.parseClaimsJws(accessToken)
+		                .getBody().get(CLAIM_KEY_EMAIL).toString();
 	}
 
 	private Date getTime(int field, int amount) {
