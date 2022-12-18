@@ -20,22 +20,22 @@ jobs:
         run: mvn clean package -Dmaven.test.skip=false
       - name: Deploy Service
         uses: appleboy/scp-action@master
-          with:
-            host: ${{ secrets.HOST }}
-            username: ${{ secrets.USERNAME }}
-            key: ${{ secrets.KEY }}
-            source: "target/user-*.jar"
-            target: ${{ screts.USER_SERVICE_PATH }}
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.KEY }}
+          source: "target/user-*.jar"
+          target: ${{ screts.USER_SERVICE_PATH }}
       - name: Restrat Service
         uses: appleboy/ssh-action@v0.1.6
-          evn:
-            SCRIPT_DIR: ${{ secrets.USER_SERVICE_PATH }}
-          with:
-            host: ${{ secrets.HOST }}
-            username: ${{ secrets.USERNAME }}
-            key: ${{ secrets.KEY }}
-            envs: SCRIPT_DIR
-            script: |
-              cd  $SCRIPT_DIR
-              sh ./stop.user-service.sh
-              sh ./start.user-service.sh
+        env:
+          SCRIPT_DIR: ${{ secrets.USER_SERVICE_PATH }}
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.KEY }}
+          envs: SCRIPT_DIR
+          script: |
+            cd  $SCRIPT_DIR
+            sh ./stop.user-service.sh
+            sh ./start.user-service.sh
