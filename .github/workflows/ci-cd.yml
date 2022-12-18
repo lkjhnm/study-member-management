@@ -17,14 +17,14 @@ jobs:
           distribution: 'zulu'
           architecture: x64
       - name: Test & Build With Maven
-        run: mvn clean package -Dmaven.test.skip=false
+        run: mvn clean package -Dmaven.test.skip=false -f core/pom.xml
       - name: Deploy Service
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.KEY }}
-          source: "target/user-*.jar"
+          source: "core/target/user-*.jar"
           target: ${{ secrets.USER_SERVICE_PATH }}
       - name: Restrat Service
         uses: appleboy/ssh-action@v0.1.6
