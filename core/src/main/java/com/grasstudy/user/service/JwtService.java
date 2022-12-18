@@ -12,6 +12,8 @@ import javax.annotation.PostConstruct;
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
 
@@ -36,8 +38,17 @@ public class JwtService {
 		                                      .setHeaderParam("kid", this.signKey.kid)
 		                                      .setClaims(Map.of("email", user.getEmail()))
 		                                      .signWith(this.signKey.privateKey)
+		                                      .setExpiration(getTime(Calendar.HOUR_OF_DAY, 1))
+		                                      .setIssuedAt(new Date())
 		                                      .compact())
 		                     .build();
+	}
+
+	private Date getTime(int field, int amount) {
+		Calendar calendar = Calendar.getInstance();
+		calendar.setTime(new Date());
+		calendar.add(field, amount);
+		return calendar.getTime();
 	}
 
 	private static class SignKey {
