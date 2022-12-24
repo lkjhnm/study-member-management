@@ -26,6 +26,7 @@ class JwtServiceTest {
 		Jws<Claims> claimsJws = Jwts.parserBuilder().setSigningKey(jwtService.getPublicKey())
 		                            .build().parseClaimsJws(auth.getAccessToken());
 
+		Assertions.assertThat(auth.isExpired()).isFalse();
 		Assertions.assertThat(auth.getRefreshToken()).isNotNull();
 		Assertions.assertThat(claimsJws.getHeader().getKeyId()).isNotNull();
 		Assertions.assertThat(claimsJws.getHeader().getAlgorithm()).isEqualTo("ES256");

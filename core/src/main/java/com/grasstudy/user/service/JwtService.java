@@ -3,7 +3,9 @@ package com.grasstudy.user.service;
 
 import com.grasstudy.user.entity.Authentication;
 import com.grasstudy.user.entity.User;
-import io.jsonwebtoken.*;
+import io.jsonwebtoken.JwtParser;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Service;
 
@@ -11,7 +13,8 @@ import javax.annotation.PostConstruct;
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.util.Calendar;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
@@ -40,22 +43,20 @@ public class JwtService {
 		                                      .setHeaderParam("kid", this.signKey.kid)
 		                                      .setClaims(Map.of(CLAIM_KEY_EMAIL, user.getEmail()))
 		                                      .signWith(this.signKey.privateKey)
-		                                      .setExpiration(getTime(Calendar.HOUR_OF_DAY, 1))
+		                                      .setExpiration(toDate(LocalDateTime.now().plusHours(1)))
 		                                      .setIssuedAt(new Date())
 		                                      .compact())
+		                     .expiredAt(LocalDateTime.now().plusHours(12))
 		                     .build();
+	}
+
+	private Date toDate(LocalDateTime localDateTime) {
+		return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
 	}
 
 	public String parseEmail(String accessToken) {
 		return jwtParser.parseClaimsJws(accessToken)
 		                .getBody().get(CLAIM_KEY_EMAIL).toString();
-	}
-
-	private Date getTime(int field, int amount) {
-		Calendar calendar = Calendar.getInstance();
-		calendar.setTime(new Date());
-		calendar.add(field, amount);
-		return calendar.getTime();
 	}
 
 	private static class SignKey {

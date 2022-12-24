@@ -3,6 +3,7 @@ package com.grasstudy.user.support;
 import com.grasstudy.user.entity.Authentication;
 import com.grasstudy.user.entity.User;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 public class MockBuilder {
@@ -18,6 +19,7 @@ public class MockBuilder {
 		return Authentication.builder()
 		                     .accessToken(UUID.randomUUID().toString())
 		                     .refreshToken(UUID.randomUUID().toString())
+		                     .expiredAt(LocalDateTime.now().plusHours(12))
 		                     .build();
 	}
 }

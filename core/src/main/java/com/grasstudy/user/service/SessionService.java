@@ -2,18 +2,26 @@ package com.grasstudy.user.service;
 
 import com.grasstudy.user.entity.Authentication;
 import com.grasstudy.user.entity.User;
+import com.grasstudy.user.event.AuthEventPublisher;
+import com.grasstudy.user.event.scheme.AuthCreateEvent;
+import com.grasstudy.user.event.scheme.AuthExpireEvent;
 import com.grasstudy.user.repository.AuthenticationRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.SignalType;
 
 @Service
 @RequiredArgsConstructor
 public class SessionService {
 
+	private final Logger logger = LoggerFactory.getLogger(getClass());
 	private final UserService userService;
 	private final JwtService jwtService;
 	private final AuthenticationRepository authRepo;
+	private final AuthEventPublisher authEventPublisher;
 
 	public Mono<Authentication> signIn(String email, String password) {
 		return userService.user(email)
@@ -29,15 +37,42 @@ public class SessionService {
 
 	public Mono<Authentication> refresh(Authentication auth) {
 		return authRepo.findByRefreshTokenAndAccessToken(auth.getRefreshToken(), auth.getAccessToken())
-		               .doOnNext(authRepo::delete)
-		               .map(Authentication::getAccessToken)
-		               .map(jwtService::parseEmail)
-		               .flatMap(userService::user)
+		               .map(this::validate)
+		               .doFinally(v -> this.publishAuthExpired(v, auth))
+		               .flatMap(this::getUser)
 		               .flatMap(this::signIn)
 		               .switchIfEmpty(Mono.error(RuntimeException::new));
 	}
 
+	private Authentication validate(Authentication authentication) {
+		if (authentication.isExpired()) {
+			throw new RuntimeException("This authentication is expired");
+		}
+		return authentication;
+	}
+
+	private Mono<User> getUser(Authentication auth) {
+		return userService.user(jwtService.parseEmail(auth.getAccessToken()));
+	}
+
 	private Mono<Authentication> signIn(User user) {
-		return authRepo.save(jwtService.signIn(user));
+		return Mono.just(jwtService.signIn(user))
+		           .doOnSuccess(this::publishAuthCreated);
+	}
+
+	private void publishAuthExpired(SignalType signalType, Authentication auth) {
+		if (signalType == SignalType.ON_NEXT ||
+				signalType == SignalType.ON_COMPLETE ||
+				signalType == SignalType.ON_ERROR) {
+			authRepo.delete(auth)
+			        .doOnSuccess(unused ->
+					        authEventPublisher.publishEvent(
+							        AuthExpireEvent.builder().auth(auth).build()))
+			        .subscribe();
+		}
+	}
+
+	private void publishAuthCreated(Authentication auth) {
+		authEventPublisher.publishEvent(AuthCreateEvent.builder().auth(auth).build());
 	}
 }
