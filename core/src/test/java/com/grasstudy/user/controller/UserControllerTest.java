@@ -1,11 +1,15 @@
 package com.grasstudy.user.controller;
 
+import com.grasstudy.user.entity.User;
+import com.grasstudy.user.service.JwtService;
 import com.grasstudy.user.service.UserService;
 import com.grasstudy.user.support.MockBuilder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -18,10 +22,14 @@ import reactor.core.publisher.Mono;
 
 import java.util.Objects;
 
+import static org.mockito.ArgumentMatchers.anyString;
+
 @ExtendWith(SpringExtension.class)
 @WebFluxTest(UserController.class)
-@Import(UserService.class)
+@Import({UserService.class, JwtService.class})
 class UserControllerTest {
+
+	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	@Autowired
 	WebTestClient webTestClient;
@@ -29,6 +37,8 @@ class UserControllerTest {
 	@MockBean
 	UserService userService;
 
+	@Autowired
+	JwtService jwtService;
 
 	@Test
 	void signup() {
@@ -62,5 +72,24 @@ class UserControllerTest {
 		             .uri("/user/check/fail_test")
 		             .exchange()
 		             .expectStatus().is4xxClientError();
+	}
+
+	@Test
+	void user() {
+		User mockUser = MockBuilder.getMockUser("mock@mock.com");
+		Mockito.when(userService.user(anyString()))
+		       .thenReturn(Mono.just(mockUser));
+		String accessToken = jwtService.signIn(mockUser).getAccessToken();
+
+		webTestClient.get()
+		             .uri("/user")
+		             .header("Authorization", String.format("Bearer %s", accessToken))
+		             .exchange()
+		             .expectStatus().isOk()
+		             .expectBody()
+		             .consumeWith(result -> logger.info("{}", result))
+		             .jsonPath("$.email").isEqualTo(mockUser.getEmail())
+		             .jsonPath("$.nickname").isEqualTo(mockUser.getNickname())
+		             .jsonPath("$.password").doesNotHaveJsonPath();
 	}
 }

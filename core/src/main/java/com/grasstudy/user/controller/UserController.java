@@ -1,6 +1,7 @@
 package com.grasstudy.user.controller;
 
 import com.grasstudy.user.entity.User;
+import com.grasstudy.user.service.JwtService;
 import com.grasstudy.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +14,7 @@ import reactor.core.publisher.Mono;
 public class UserController {
 
 	private final UserService userService;
+	private final JwtService jwtService;
 
 	// 회원가입
 	@RequestMapping(method = RequestMethod.POST)
@@ -30,5 +32,16 @@ public class UserController {
 	}
 
 	// 사용자 조회
+	@ResponseBody
+	@RequestMapping(method = RequestMethod.GET)
+	public Mono<ResponseEntity<User>> me(@RequestHeader String authorization) {
+		return userService.user(jwtService.parseEmail(parseAccessToken(authorization)))
+		                  .map(ResponseEntity::ok)
+		                  .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
+	}
 
+	//todo: do it this, spring security filter module
+	private String parseAccessToken(String authorization) {
+		return authorization.substring(authorization.indexOf(" "));
+	}
 }
