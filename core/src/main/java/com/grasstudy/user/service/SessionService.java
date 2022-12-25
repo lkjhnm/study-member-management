@@ -56,7 +56,7 @@ public class SessionService {
 	}
 
 	private Mono<Authentication> signIn(User user) {
-		return Mono.just(jwtService.signIn(user))
+		return authRepo.save(jwtService.signIn(user))
 		           .doOnSuccess(this::publishAuthCreated);
 	}
 
@@ -64,7 +64,7 @@ public class SessionService {
 		if (signalType == SignalType.ON_NEXT ||
 				signalType == SignalType.ON_COMPLETE ||
 				signalType == SignalType.ON_ERROR) {
-			authRepo.delete(auth)
+			authRepo.deleteByRefreshTokenAndAccessToken(auth.getRefreshToken(), auth.getAccessToken())
 			        .doOnSuccess(unused ->
 					        authEventPublisher.publishEvent(
 							        AuthExpireEvent.builder().auth(auth).build()))

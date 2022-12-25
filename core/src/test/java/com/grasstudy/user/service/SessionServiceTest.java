@@ -68,7 +68,8 @@ class SessionServiceTest {
 		Authentication mockAuth = jwtService.signIn(mockUser);
 		Mockito.when(authRepo.findByRefreshTokenAndAccessToken(mockAuth.getRefreshToken(), mockAuth.getAccessToken()))
 		       .thenReturn(Mono.just(mockAuth));
-		Mockito.when(authRepo.delete(mockAuth)).thenReturn(Mono.empty());
+		Mockito.when(authRepo.deleteByRefreshTokenAndAccessToken(mockAuth.getRefreshToken(), mockAuth.getAccessToken()))
+		       .thenReturn(Mono.empty());
 		Mockito.when(authRepo.save(any())).thenAnswer(t -> Mono.just(t.getArgument(0)));
 		Mockito.when(userService.user("mock@mock.com")).thenReturn(Mono.just(mockUser));
 

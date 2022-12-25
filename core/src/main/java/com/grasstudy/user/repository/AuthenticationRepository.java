@@ -9,4 +9,6 @@ import reactor.core.publisher.Mono;
 public interface AuthenticationRepository extends ReactiveCrudRepository<Authentication, String> {
 
 	Mono<Authentication> findByRefreshTokenAndAccessToken(String refreshToken, String accessToken);
+
+	Mono<Void> deleteByRefreshTokenAndAccessToken(String refreshToken, String accessToken);
 }
