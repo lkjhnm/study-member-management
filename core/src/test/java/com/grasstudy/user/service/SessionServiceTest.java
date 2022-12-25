@@ -3,8 +3,6 @@ package com.grasstudy.user.service;
 import com.grasstudy.user.entity.Authentication;
 import com.grasstudy.user.entity.User;
 import com.grasstudy.user.event.AuthEventPublisher;
-import com.grasstudy.user.event.scheme.AuthCreateEvent;
-import com.grasstudy.user.event.scheme.AuthExpireEvent;
 import com.grasstudy.user.repository.AuthenticationRepository;
 import com.grasstudy.user.support.MockBuilder;
 import org.junit.jupiter.api.Test;
@@ -14,14 +12,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(SpringExtension.class)
-@Import({SessionService.class, JwtService.class, AuthEventPublisher.class, AuthEventService.class})
+@Import({SessionService.class, JwtService.class})
 class SessionServiceTest {
 
 	@Autowired
@@ -30,11 +27,8 @@ class SessionServiceTest {
 	@Autowired
 	JwtService jwtService;
 
-	@Autowired
-	Flux<AuthCreateEvent> authCreateEventFlux;
-
-	@Autowired
-	Flux<AuthExpireEvent> authExpireEventFlux;
+	@MockBean
+	AuthEventPublisher authEventPublisher;
 
 	@MockBean
 	UserService userService;
@@ -79,12 +73,26 @@ class SessionServiceTest {
 		Mockito.when(userService.user("mock@mock.com")).thenReturn(Mono.just(mockUser));
 
 		sessionService.refresh(mockAuth).log()
-				.as(StepVerifier::create)
-				.expectNextMatches(newAuth -> !mockAuth.getAccessToken().equals(newAuth.getAccessToken()) &&
-						!mockAuth.getRefreshToken().equals(newAuth.getRefreshToken()) &&
-						jwtService.parseEmail(newAuth.getAccessToken()).equals("mock@mock.com"))
-				.verifyComplete();
+		              .as(StepVerifier::create)
+		              .expectNextMatches(newAuth -> !mockAuth.getAccessToken().equals(newAuth.getAccessToken()) &&
+				              !mockAuth.getRefreshToken().equals(newAuth.getRefreshToken()) &&
+				              jwtService.parseEmail(newAuth.getAccessToken()).equals("mock@mock.com"))
+		              .verifyComplete();
 
-		//todo: verify flux event published, with mockito verify
+		Mockito.verify(authEventPublisher, Mockito.times(2)).publishEvent(any());
+	}
+
+	@Test
+	void refresh_fail() {
+		User mockUser = MockBuilder.getMockUser("mock@mock.com");
+		Authentication mockAuth = jwtService.signIn(mockUser);
+		Mockito.when(authRepo.findByRefreshTokenAndAccessToken(mockAuth.getRefreshToken(), mockAuth.getAccessToken()))
+		       .thenReturn(Mono.empty());
+
+		sessionService.refresh(mockAuth).log()
+		              .as(StepVerifier::create)
+		              .expectError().verify();
+
+		Mockito.verify(authEventPublisher, Mockito.times(0)).publishEvent(any());
 	}
 }
