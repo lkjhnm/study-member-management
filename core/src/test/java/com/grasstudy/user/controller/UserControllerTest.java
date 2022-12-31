@@ -4,6 +4,7 @@ import com.grasstudy.user.entity.User;
 import com.grasstudy.user.service.JwtService;
 import com.grasstudy.user.service.UserService;
 import com.grasstudy.user.support.MockBuilder;
+import io.jsonwebtoken.JwtException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatchers;
@@ -13,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -37,7 +39,7 @@ class UserControllerTest {
 	@MockBean
 	UserService userService;
 
-	@Autowired
+	@SpyBean
 	JwtService jwtService;
 
 	@Test
@@ -91,5 +93,19 @@ class UserControllerTest {
 		             .jsonPath("$.email").isEqualTo(mockUser.getEmail())
 		             .jsonPath("$.nickname").isEqualTo(mockUser.getNickname())
 		             .jsonPath("$.password").doesNotHaveJsonPath();
+	}
+
+	@Test
+	void user_when_token_expired() {
+		User mockUser = MockBuilder.getMockUser("mock@mock.com");
+		String accessToken = jwtService.signIn(mockUser).getAccessToken();
+		Mockito.doThrow(new JwtException("test exception"))
+		       .when(jwtService).parseEmail(anyString());
+
+		webTestClient.get()
+		             .uri("/user")
+		             .header("Authorization", String.format("Bearer %s", accessToken))
+		             .exchange()
+		             .expectStatus().isUnauthorized();
 	}
 }
