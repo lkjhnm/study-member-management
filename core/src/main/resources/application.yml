@@ -1,0 +1,10 @@
+spring:
+  cloud:
+    stream:
+      function:
+        definition: keyCreateEventSubscriber;keyCreateEventPublisher;
+      bindings:
+        keyCreateEventPublisher-out-0:
+          destination: signkey-create-event
+        keyCreateEventSubscriber-in-0:
+          destination: signkey-create-event

@@ -2,7 +2,7 @@ package com.grasstudy.user.service;
 
 import com.grasstudy.user.entity.User;
 import com.grasstudy.user.repository.UserRepository;
-import com.grasstudy.user.support.MockBuilder;
+import com.grasstudy.user.support.MockData;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -25,7 +25,7 @@ class UserServiceTest {
 
 	@Test
 	void signup() {
-		User mockUser = MockBuilder.getMockUser("mock-id");
+		User mockUser = MockData.getMockUser("mock-id");
 		Mockito.when(userRepository.save(any())).thenReturn(Mono.just(mockUser));
 
 		StepVerifier.create(userService.signup(mockUser))
@@ -37,7 +37,7 @@ class UserServiceTest {
 	void signup_fail_test() {
 		Mockito.when(userRepository.save(any())).thenReturn(Mono.error(new RuntimeException("mock error")));
 
-		User mockUser = MockBuilder.getMockUser("mock-id");
+		User mockUser = MockData.getMockUser("mock-id");
 		StepVerifier.create(userService.signup(mockUser))
 		            .expectError(RuntimeException.class)
 		            .verify();

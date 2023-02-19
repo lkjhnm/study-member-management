@@ -1,28 +1,27 @@
 package com.grasstudy.user.controller;
 
+import com.grasstudy.user.dto.SignInRequest;
 import com.grasstudy.user.entity.Authentication;
 import com.grasstudy.user.service.SessionService;
-import com.grasstudy.user.support.MockBuilder;
+import com.grasstudy.user.support.MockData;
 import io.jsonwebtoken.Jwts;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Mono;
 
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 
-@ExtendWith(SpringExtension.class)
 @WebFluxTest(SessionController.class)
-class SessionControllerTest {
+class SessionControllerTest extends ControllerTestBase {
 
 	Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -32,22 +31,22 @@ class SessionControllerTest {
 	@MockBean
 	SessionService sessionService;
 
+	@SpyBean
+	SessionController sessionController;
+
 	@Test
 	void sign_in() {
 		Authentication mockToken = Authentication.builder()
 		                                         .refreshToken("test-refresh-token")
 		                                         .accessToken(Jwts.builder().compact())
 		                                         .build();
-		Mockito.when(sessionService.signIn(anyString(), anyString()))
+		SignInRequest mockParam = MockData.signInRequest();
+		Mockito.when(sessionService.signIn(eq(mockParam.getUserId()), eq(mockParam.getPassword())))
 		       .thenReturn(Mono.just(mockToken));
-
 		webTestClient.post()
 		             .uri("/session/sign-in")
 		             .contentType(MediaType.APPLICATION_JSON)
-		             .body(BodyInserters.fromValue("{\n" +
-				             "  \"email\" : \"mock@mock.com\",\n" +
-				             "  \"password\" : \"12345!@\"\n" +
-				             "}"))
+		             .body(BodyInserters.fromValue(mockParam))
 		             .exchange()
 		             .expectStatus().is2xxSuccessful()
 		             .expectBody()
@@ -55,29 +54,29 @@ class SessionControllerTest {
 		             .jsonPath("$.refreshToken").isEqualTo(mockToken.getRefreshToken())
 		             .jsonPath("$.accessToken").isEqualTo(mockToken.getAccessToken())
 		             .jsonPath("$.id").doesNotHaveJsonPath();
+
+		Mockito.verify(sessionController).signIn(eq(mockParam));
 	}
 
 	@Test
 	void sign_in_failure() {
+		SignInRequest mockParam = MockData.signInRequest();
 		Mockito.when(sessionService.signIn(anyString(), anyString()))
 		       .thenReturn(Mono.error(RuntimeException::new));
 
 		webTestClient.post()
 		             .uri("/session/sign-in")
 		             .contentType(MediaType.APPLICATION_JSON)
-		             .body(BodyInserters.fromValue("{\n" +
-				             "  \"email\" : \"mock@mock.com\",\n" +
-				             "  \"password\" : \"12345!@\"\n" +
-				             "}"))
+		             .body(BodyInserters.fromValue(mockParam))
 		             .exchange()
-		             .expectStatus().isEqualTo(401)
-		;
+		             .expectStatus().isEqualTo(401);
+		Mockito.verify(sessionController).signIn(eq(mockParam));
 	}
 
 	@Test
 	void refresh() {
-		Authentication expiredAuth = MockBuilder.auth();
-		Authentication newAuth = MockBuilder.auth();
+		Authentication expiredAuth = MockData.expiredAuth();
+		Authentication newAuth = MockData.auth();
 		Mockito.when(sessionService.refresh(expiredAuth)).thenReturn(Mono.just(newAuth));
 
 		webTestClient.post()
@@ -91,18 +90,20 @@ class SessionControllerTest {
 		             .jsonPath("$.refreshToken").isEqualTo(newAuth.getRefreshToken())
 		             .jsonPath("$.accessToken").isEqualTo(newAuth.getAccessToken())
 		             .jsonPath("$.id").doesNotHaveJsonPath();
+
+		Mockito.verify(sessionController).refresh(eq(expiredAuth));
 	}
 
 	@Test
 	void refresh_failure() {
-		Authentication auth = MockBuilder.auth();
-		Mockito.when(sessionService.refresh(auth))
+		Authentication expiredAuth = MockData.expiredAuth();
+		Mockito.when(sessionService.refresh(expiredAuth))
 		       .thenReturn(Mono.error(RuntimeException::new));
 
 		webTestClient.post()
 		             .uri("/session/refresh")
 		             .contentType(MediaType.APPLICATION_JSON)
-		             .body(BodyInserters.fromValue(auth))
+		             .body(BodyInserters.fromValue(expiredAuth))
 		             .exchange()
 		             .expectStatus().isEqualTo(401);
 	}

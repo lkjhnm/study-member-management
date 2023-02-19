@@ -13,6 +13,9 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.SignalType;
 
+import java.time.LocalDateTime;
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class SessionService {
@@ -23,8 +26,8 @@ public class SessionService {
 	private final AuthenticationRepository authRepo;
 	private final AuthEventPublisher authEventPublisher;
 
-	public Mono<Authentication> signIn(String email, String password) {
-		return userService.user(email)
+	public Mono<Authentication> signIn(String userId, String password) {
+		return userService.user(userId)
 		                  .filter(v -> this.checkPassword(v.getPassword(), password))
 		                  .flatMap(this::signIn)
 		                  .switchIfEmpty(Mono.error(RuntimeException::new));    //todo: 로그인 실패 예외 정의
@@ -52,12 +55,20 @@ public class SessionService {
 	}
 
 	private Mono<User> getUser(Authentication auth) {
-		return userService.user(jwtService.parseEmail(auth.getAccessToken()));
+		return userService.user(jwtService.parseUserId(auth.getAccessToken()));
 	}
 
 	private Mono<Authentication> signIn(User user) {
-		return authRepo.save(jwtService.signIn(user))
+		return authRepo.save(createAuth(user))
 		           .doOnSuccess(this::publishAuthCreated);
+	}
+
+	Authentication createAuth(User user) {
+		return Authentication.builder()
+		                     .refreshToken(UUID.randomUUID().toString())
+		                     .accessToken(jwtService.sign(user.getUserId()))
+		                     .expiredAt(LocalDateTime.now().plusHours(12))
+		                     .build();
 	}
 
 	private void publishAuthExpired(SignalType signalType, Authentication auth) {
@@ -66,8 +77,7 @@ public class SessionService {
 				signalType == SignalType.ON_ERROR) {
 			authRepo.deleteByRefreshTokenAndAccessToken(auth.getRefreshToken(), auth.getAccessToken())
 			        .doOnSuccess(unused ->
-					        authEventPublisher.publishEvent(
-							        AuthExpireEvent.builder().auth(auth).build()))
+					        authEventPublisher.publishEvent(AuthExpireEvent.builder().auth(auth).build()))
 			        .subscribe();
 		}
 	}

@@ -2,7 +2,7 @@ package com.grasstudy.user.repository;
 
 import com.grasstudy.user.R2DBCConfiguration;
 import com.grasstudy.user.entity.Authentication;
-import com.grasstudy.user.support.MockBuilder;
+import com.grasstudy.user.support.MockData;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.r2dbc.DataR2dbcTest;
@@ -18,7 +18,7 @@ class AuthenticationRepositoryTest {
 
 	@Test
 	public void save() {
-		Authentication mockAuth = MockBuilder.auth();
+		Authentication mockAuth = MockData.auth();
 		authRepo.save(mockAuth)
 		        .log()
 		        .as(StepVerifier::create)

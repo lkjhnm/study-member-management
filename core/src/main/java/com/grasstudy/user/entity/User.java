@@ -22,6 +22,7 @@ public class User implements Persistable<String> {
 	@Id
 	@JsonIgnore
 	private String id;
+	private String userId;
 	private String email;
 	@JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
 	private String password;    // todo: password encoder

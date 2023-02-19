@@ -11,4 +11,6 @@ public interface UserRepository extends ReactiveCrudRepository<User, String> {
 
 	Mono<User> findByEmail(String email);
 
+	Mono<User> findByUserId(String userId);
+
 }
